@@ -1,0 +1,25 @@
+{
+  "name": "hapi-authy",
+  "version": "0.0.2",
+  "description": "Authy 2FA with hapi",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/mtharrison/hapi-authy.git"
+  },
+  "keywords": [
+    "2fa",
+    "auth",
+    "hapi",
+    "security"
+  ],
+  "author": "Matt Harrison",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/mtharrison/hapi-authy/issues"
+  },
+  "homepage": "https://github.com/mtharrison/hapi-authy#readme"
+}
