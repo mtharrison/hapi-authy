@@ -113,7 +113,7 @@ server.register([
                 const credentials = request.auth.credentials;
                 const user = users[credentials.email];
                 user.requireTfa = true;
-                user.authyId = credentials.authyId
+                user.authyId = credentials.authyId;
                 request.auth.session.set(user);
                 return reply.redirect('/');
             }
@@ -156,7 +156,7 @@ server.register([
 
                 if (tfa || user.requireTfa) {
                     return reply.redirect('/authy').state('authy', {
-                        email: email, 
+                        email: email,
                         authyId: user.authyId
                     });
                 }
