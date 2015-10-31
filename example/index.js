@@ -7,15 +7,9 @@ var server = new Hapi.Server();
 server.connection({ port: 4000 });
 
 server.register([
-    { 
-        register: require('vision') 
-    },
-    { 
-        register: require('hapi-auth-cookie') 
-    },
-    { 
-        register: require('..')
-    },
+    { register: require('vision') },
+    { register: require('hapi-auth-cookie') },
+    { register: require('..') },
 ], function (err) {
 
     if (err) {
@@ -37,6 +31,14 @@ server.register([
             path: '/',
             encoding: 'iron',
             password: 'Q3QJIcIIvKcMwG7c'
+        },
+        registerFunc: function (request, reply) {
+
+            reply.view('register', { path: request.path });
+        },
+        verifyFunc: function (request, reply) {
+
+            reply.view('verify', { path: request.path });
         }
     });
 
