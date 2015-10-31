@@ -16,7 +16,7 @@ const internals = {
 
             reply.view('authy/verify', {
                 path: request.path,
-                smsPath: request.plugins.authy.smsPath
+                requestTokenUrl: request.plugins.authy.requestTokenUrl
             });
         },
         failRegister: (err, request, reply) => {
@@ -26,6 +26,10 @@ const internals = {
         failVerify: (err, request, reply) => {
 
             reply(Boom.unauthorized('Could\'t validate token'));
+        },
+        tokenRequested: (err, request, reply) => {
+
+            reply.redirect(request.query.returnUrl);
         }
     }
 };
@@ -34,7 +38,7 @@ const internals = {
 internals.schemeOptionsSchema = {
     apiKey: Joi.string().required(),
     cookieName: Joi.string().default('authy'),
-    generateSmsPath: Joi.string().default('/authy-generate-sms'),
+    requestTokenUrl: Joi.string().default('/authy-request-token'),
     sandbox: Joi.boolean().default(false),
     cookieOptions: Joi.object().keys({
         encoding: Joi.string().valid('iron')
@@ -44,12 +48,14 @@ internals.schemeOptionsSchema = {
         register: Joi.func().default(internals.defaults.register),
         verify: Joi.func().default(internals.defaults.verify),
         failRegister: Joi.func().default(internals.defaults.failRegister),
-        failVerify: Joi.func().default(internals.defaults.failVerify)
+        failVerify: Joi.func().default(internals.defaults.failVerify),
+        tokenRequested: Joi.func().default(internals.defaults.tokenRequested)
     }).default({
         register: internals.defaults.register,
         verify: internals.defaults.verify,
         failRegister: internals.defaults.failRegister,
-        failVerify: internals.defaults.failVerify
+        failVerify: internals.defaults.failVerify,
+        tokenRequested: internals.defaults.tokenRequested
     })
 };
 
@@ -65,12 +71,12 @@ internals.scheme = function (server, options) {
 
     server.route({
         method: 'GET',
-        path: settings.generateSmsPath,
+        path: settings.requestTokenUrl,
         handler: function (request, reply) {
 
             authy.request_sms(request.state[settings.cookieName].authyId, (err, res) => {
 
-                reply('ok');
+                settings.funcs.tokenRequested(err, request, reply);
             });
         }
     });
@@ -79,7 +85,7 @@ internals.scheme = function (server, options) {
         authenticate: function (request, reply) {
 
             request.plugins.authy = request.plugins.authy || {};
-            request.plugins.authy.generateSmsPath = settings.generateSmsPath;
+            request.plugins.authy.requestTokenUrl = settings.requestTokenUrl;
 
             const cookie = request.state[settings.cookieName];
 
