@@ -4,7 +4,7 @@
   "description": "Authy 2FA with hapi",
   "main": "index.js",
   "scripts": {
-    "test": "npm test"
+    "test": "lab -a code -t 100 -L"
   },
   "repository": {
     "type": "git",
@@ -18,6 +18,9 @@
     "hapi",
     "security"
   ],
+  "engines": {
+    "node": ">=4.0.0"
+  },
   "author": "Matt Harrison",
   "license": "BSD-3-Clause",
   "bugs": {
@@ -26,11 +29,13 @@
   "homepage": "https://github.com/mtharrison/hapi-authy#readme",
   "devDependencies": {
     "bcryptjs": "^2.3.0",
+    "code": "^2.0.1",
     "handlebars": "^4.0.4",
     "hapi": "^11.0.3",
     "hapi-auth-cookie": "^3.1.0",
-    "vision": "^3.0.0",
-    "sqlite3": "^3.1.0"
+    "lab": "^7.1.0",
+    "sqlite3": "^3.1.0",
+    "vision": "^3.0.0"
   },
   "dependencies": {
     "authy": "^1.1.2",

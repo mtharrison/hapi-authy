@@ -1,11 +1,13 @@
-var Authy = require('authy');
-var Boom = require('boom');
-var Hoek = require('hoek');
-var Joi = require('joi');
-var Package = require('./package');
+'use strict';
+
+const Authy = require('authy');
+const Boom = require('boom');
+const Hoek = require('hoek');
+const Joi = require('joi');
+const Package = require('./package');
 
 
-var internals = {
+const internals = {
     schemeOptionsSchema: {
         apiKey: Joi.string().required(),
         cookieName: Joi.string().default('authy'),
@@ -20,18 +22,18 @@ var internals = {
 
 internals.scheme = function (server, options) {
 
-    var result = Joi.validate(options, internals.schemeOptionsSchema);
+    const result = Joi.validate(options, internals.schemeOptionsSchema);
     Hoek.assert(!result.error, result.error);
 
-    var settings = result.value;
-    var authy = Authy(settings.apiKey, settings.sandbox ? settings.sandboxUrl : null);
+    const settings = result.value;
+    const authy = Authy(settings.apiKey, settings.sandbox ? settings.sandboxUrl : null);
 
     server.state(settings.cookieName, settings.cookieOptions);
 
     return {
         authenticate: function (request, reply) {
 
-            var cookie = request.state[settings.cookieName];
+            const cookie = request.state[settings.cookieName];
 
             if (!cookie) {
                 return reply(Boom.unauthorized('Missing authy cookie'));
@@ -51,11 +53,11 @@ internals.scheme = function (server, options) {
         },
         payload: function (request, reply) {
 
-            var cookie = request.state[settings.cookieName];
-            var payload = request.payload;
+            const cookie = request.state[settings.cookieName];
+            const payload = request.payload;
 
             if (payload.phone && payload.country) {
-                return authy.register_user(cookie.email, payload.phone, payload.country, true, function (err, res) {
+                return authy.register_user(cookie.email, payload.phone, payload.country, true, (err, res) => {
 
                     if (err || !res.success) {
                         return reply(Boom.unauthorized('Could\'t register user'));
@@ -67,7 +69,7 @@ internals.scheme = function (server, options) {
             }
 
             if (request.payload.token) {
-                return authy.verify(cookie.authyId, payload.token, function (err, res) {
+                return authy.verify(cookie.authyId, payload.token, (err, res) => {
 
                     if (err) {
                         return reply(Boom.unauthorized('Could\'t validate token'));
@@ -80,7 +82,7 @@ internals.scheme = function (server, options) {
 
             reply(Boom.unauthorized('Invalid payload'));
         }
-    }
+    };
 };
 
 

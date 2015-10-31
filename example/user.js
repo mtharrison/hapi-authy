@@ -1,10 +1,12 @@
-var Bcrypt = require('bcryptjs');
-var Path = require('path');
-var Sqlite3 = require('sqlite3');
+'use strict';
 
-var db = new Sqlite3.Database(Path.join(__dirname, 'db.sqlite'));
+const Bcrypt = require('bcryptjs');
+const Path = require('path');
+const Sqlite3 = require('sqlite3');
+const db = new Sqlite3.Database(Path.join(__dirname, 'db.sqlite'));
 
-var internals = {};
+
+const internals = {};
 
 
 exports.get = internals.get = function (email, callback) {
@@ -15,13 +17,13 @@ exports.get = internals.get = function (email, callback) {
 
 exports.validatePassword = function (email, password, callback) {
 
-    internals.get(email, function (err, user) {
+    internals.get(email, (err, user) => {
 
         if (err) {
             return callback(err);
         }
 
-        Bcrypt.compare(password, user.password, function (err, valid) {
+        Bcrypt.compare(password, user.password, (err, valid) => {
 
             callback(err, valid, user);
         });
@@ -31,16 +33,16 @@ exports.validatePassword = function (email, password, callback) {
 
 exports.setTFA = function (email, authyId, callback) {
 
-    internals.get(email, function (err, user) {
+    internals.get(email, (err, user) => {
 
         if (err) {
             return callback(err);
         }
 
-        db.run('UPDATE users SET authy_id = ?, require_2fa = 1 WHERE id = ?', 
-            [authyId, user.id], function (err) {
+        db.run('UPDATE users SET authy_id = ?, require_2fa = 1 WHERE id = ?',
+            [authyId, user.id], (err) => {
 
-            return callback(err, user);
-        });
+                return callback(err, user);
+            });
     });
 };

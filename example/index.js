@@ -1,16 +1,18 @@
-var Hapi = require('hapi');
-var Joi = require('joi');
-var Path = require('path');
-var User = require('./user');
+'use strict';
 
-var server = new Hapi.Server();
+const Hapi = require('hapi');
+const Joi = require('joi');
+const Path = require('path');
+const User = require('./user');
+
+const server = new Hapi.Server();
 server.connection({ port: 4000 });
 
 server.register([
     { register: require('vision') },
     { register: require('hapi-auth-cookie') },
-    { register: require('..') },
-], function (err) {
+    { register: require('..') }
+], (err) => {
 
     if (err) {
         throw err;
@@ -48,7 +50,7 @@ server.register([
         },
         path: Path.join(__dirname, 'templates'),
         layout: true,
-        isCached: false 
+        isCached: false
     });
 
     server.route({
@@ -73,6 +75,19 @@ server.register([
     });
 
     server.route({
+        method: 'GET',
+        path: '/logout',
+        config: {
+            auth: 'session'
+        },
+        handler: function (request, reply) {
+
+            request.auth.session.clear();
+            reply.redirect('/');
+        }
+    });
+
+    server.route({
         method: ['GET', 'POST'],
         path: '/authy',
         config: {
@@ -82,9 +97,9 @@ server.register([
             },
             handler: function (request, reply) {
 
-                var credentials = request.auth.credentials;
-                
-                User.setTFA(credentials.email, credentials.authyId, function (err, user) {
+                const credentials = request.auth.credentials;
+
+                User.setTFA(credentials.email, credentials.authyId, (err, user) => {
 
                     if (err) {
                         throw err;
@@ -111,11 +126,11 @@ server.register([
         },
         handler: function (request, reply) {
 
-            var email = request.payload.email;
-            var password = request.payload.password;
-            var tfa = request.payload.tfa;
+            const email = request.payload.email;
+            const password = request.payload.password;
+            const tfa = request.payload.tfa;
 
-            User.validatePassword(email, password, function (err, valid, user) {
+            User.validatePassword(email, password, (err, valid, user) => {
 
                 if (err) {
                     throw err;
@@ -125,10 +140,10 @@ server.register([
                     return reply.view('login');
                 }
 
-                if (request.payload.tfa || user.require_2fa) {
+                if (tfa || user.require_2fa) {
                     return reply.redirect('/authy')
-                        .state('authy', { 
-                            email: user.email, authyId: user.authy_id 
+                        .state('authy', {
+                            email: user.email, authyId: user.authy_id
                         });
                 }
 
@@ -138,20 +153,8 @@ server.register([
         }
     });
 
-    server.route({
-        method: 'GET',
-        path: '/logout',
-        config: {
-            auth: 'session'
-        },
-        handler: function (request, reply) {
+    server.start(() => {
 
-            request.auth.session.clear();
-            reply.redirect('/');
-        }
-    });
-    
-    server.start(function () {
         console.log('Started server');
     });
 });
