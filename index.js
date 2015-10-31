@@ -1,6 +1,5 @@
 'use strict';
 
-const Authy = require('authy');
 const Boom = require('boom');
 const Hoek = require('hoek');
 const Joi = require('joi');
@@ -56,7 +55,8 @@ internals.schemeOptionsSchema = {
         failRegister: internals.defaults.failRegister,
         failVerify: internals.defaults.failVerify,
         tokenRequested: internals.defaults.tokenRequested
-    })
+    }),
+    client: Joi.func().default(require('authy'))
 };
 
 
@@ -65,7 +65,7 @@ internals.scheme = function (server, options) {
     const result = Joi.validate(options, internals.schemeOptionsSchema);
     Hoek.assert(!result.error, result.error);
     const settings = result.value;
-    const authy = Authy(settings.apiKey, settings.sandbox ? settings.sandboxUrl : null);
+    const authy = settings.client(settings.apiKey, settings.sandbox ? settings.sandboxUrl : null);
 
     server.state(settings.cookieName, settings.cookieOptions);
 
@@ -124,7 +124,8 @@ internals.scheme = function (server, options) {
 
                 const payloadResult = Joi.validate(request.payload, schema);
 
-                if (result.error) {
+                if (payloadResult.error) {
+
                     return settings.funcs.failRegister(payloadResult.error, request, reply);
                 }
 

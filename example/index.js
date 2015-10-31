@@ -103,7 +103,7 @@ server.register([
     // Authy 2FA stage
 
     server.auth.strategy('authy', 'authy', {
-        apiKey: 'ikdsVwp8503GNcAqMLC2GToxj1EXq3Yq',
+        apiKey: 'aDfI6YR2qFF6Klsl6eEJTBLqAfphO9AG',
         sandbox: false,
         cookieOptions: {
             isSecure: false,
