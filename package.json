@@ -12,7 +12,9 @@
   },
   "keywords": [
     "2fa",
+    "two-factor",
     "auth",
+    "authentication",
     "hapi",
     "security"
   ],
@@ -23,16 +25,17 @@
   },
   "homepage": "https://github.com/mtharrison/hapi-authy#readme",
   "devDependencies": {
+    "bcryptjs": "^2.3.0",
     "handlebars": "^4.0.4",
     "hapi": "^11.0.3",
-    "vision": "^3.0.0"
+    "hapi-auth-cookie": "^3.1.0",
+    "vision": "^3.0.0",
+    "sqlite3": "^3.1.0"
   },
   "dependencies": {
     "authy": "^1.1.2",
-    "bcrypt": "^0.8.5",
     "boom": "^2.10.0",
-    "hapi-auth-cookie": "^3.1.0",
-    "joi": "^6.10.0",
-    "sqlite3": "^3.1.0"
+    "hoek": "^3.0.0",
+    "joi": "^6.10.0"
   }
 }

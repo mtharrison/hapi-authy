@@ -1,4 +1,4 @@
-var Bcrypt = require('bcrypt');
+var Bcrypt = require('bcryptjs');
 var Path = require('path');
 var Sqlite3 = require('sqlite3');
 

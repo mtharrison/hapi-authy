@@ -1,5 +1,3 @@
-var Bcrypt = require('bcrypt');
-
 var Hapi = require('hapi');
 var Joi = require('joi');
 var Path = require('path');
@@ -9,9 +7,15 @@ var server = new Hapi.Server();
 server.connection({ port: 4000 });
 
 server.register([
-    { register: require('vision') },
-    { register: require('hapi-auth-cookie') },
-    { register: require('./authy') },
+    { 
+        register: require('vision') 
+    },
+    { 
+        register: require('hapi-auth-cookie') 
+    },
+    { 
+        register: require('..')
+    },
 ], function (err) {
 
     if (err) {
@@ -26,8 +30,14 @@ server.register([
     });
 
     server.auth.strategy('authy', 'authy', {
-        apiKey: 'jkdsVwp8503GNcAqMLC2GToxj1EXq3Yq',
-        sandbox: false
+        apiKey: 'ikdsVwp8503GNcAqMLC2GToxj1EXq3Yq',
+        sandbox: false,
+        cookieOptions: {
+            isSecure: false,
+            path: '/',
+            encoding: 'iron',
+            password: 'Q3QJIcIIvKcMwG7c'
+        }
     });
 
     server.views({
