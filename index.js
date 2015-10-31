@@ -36,7 +36,9 @@ internals.schemeOptionsSchema = {
     cookieName: Joi.string().default('authy'),
     generateSmsPath: Joi.string().default('/authy-generate-sms'),
     sandbox: Joi.boolean().default(false),
-    cookieOptions: Joi.object(),
+    cookieOptions: Joi.object().keys({
+        encoding: Joi.string().valid('iron')
+    }).options({ allowUnknown: true }),
     sandboxUrl: Joi.string().default('http://sandbox-api.authy.com'),
     funcs: Joi.object().keys({
         register: Joi.func().default(internals.defaults.register),
