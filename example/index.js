@@ -1,12 +1,20 @@
 'use strict';
 
+const Bcrypt = require('bcryptjs');
 const Hapi = require('hapi');
 const Joi = require('joi');
 const Path = require('path');
-const User = require('./user');
 
 const server = new Hapi.Server();
 server.connection({ port: 4000 });
+
+const users = {
+    'hi@matt-harrison.com': {
+        password: '$2a$08$.sI.S6l9lL0crviIOn/EUuAc/0oTlBA9R0b6rGEJYRD2p2h76bKK.',
+        requireTfa: false,
+        authyId: null
+    }
+};
 
 server.register([
     { register: require('vision') },
@@ -103,16 +111,11 @@ server.register([
             handler: function (request, reply) {
 
                 const credentials = request.auth.credentials;
-
-                User.setTFA(credentials.email, credentials.authyId, (err, user) => {
-
-                    if (err) {
-                        throw err;
-                    }
-
-                    request.auth.session.set(user);
-                    return reply.redirect('/');
-                });
+                const user = users[credentials.email];
+                user.requireTfa = true;
+                user.authyId = credentials.authyId
+                request.auth.session.set(user);
+                return reply.redirect('/');
             }
         }
     });
@@ -135,21 +138,27 @@ server.register([
             const password = request.payload.password;
             const tfa = request.payload.tfa;
 
-            User.validatePassword(email, password, (err, valid, user) => {
+            const user = users[email];
+
+            if (!user) {
+                return reply(Boom.unauthorized());
+            }
+
+            Bcrypt.compare(password, user.password, (err, valid) => {
 
                 if (err) {
                     throw err;
                 }
 
                 if (!valid) {
-                    return reply.view('login');
+                    return reply(Boom.unauthorized());
                 }
 
-                if (tfa || user.require_2fa) {
-                    return reply.redirect('/authy')
-                        .state('authy', {
-                            email: user.email, authyId: user.authy_id
-                        });
+                if (tfa || user.requireTfa) {
+                    return reply.redirect('/authy').state('authy', {
+                        email: email, 
+                        authyId: user.authyId
+                    });
                 }
 
                 request.auth.session.set(user);
