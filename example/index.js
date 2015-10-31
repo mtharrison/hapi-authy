@@ -53,7 +53,7 @@ server.register([
         isCached: false
     });
 
-    server.route({
+    server.route([{
         method: 'GET',
         path: '/',
         config: {
@@ -144,7 +144,7 @@ server.register([
                 return reply.redirect('/');
             });
         }
-    });
+    }]);
 
     server.start(() => {
 
