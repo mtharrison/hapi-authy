@@ -41,19 +41,6 @@ server.register([
             path: '/',
             encoding: 'iron',
             password: 'Q3QJIcIIvKcMwG7c'
-        },
-        funcs: {
-            register: function (request, reply) {
-
-                reply.view('register', { path: request.path });
-            },
-            verify: function (request, reply) {
-
-                reply.view('verify', {
-                    path: request.path,
-                    smsPath: request.plugins.authy.smsPath
-                });
-            }
         }
     });
 
@@ -76,18 +63,14 @@ server.register([
 
             reply.view('index');
         }
-    });
-
-    server.route({
+    }, {
         method: 'GET',
         path: '/login',
         handler: function (request, reply) {
 
             reply.view('login');
         }
-    });
-
-    server.route({
+    }, {
         method: 'GET',
         path: '/logout',
         config: {
@@ -98,9 +81,7 @@ server.register([
             request.auth.session.clear();
             reply.redirect('/');
         }
-    });
-
-    server.route({
+    }, {
         method: ['GET', 'POST'],
         path: '/authy',
         config: {
@@ -118,9 +99,7 @@ server.register([
                 return reply.redirect('/');
             }
         }
-    });
-
-    server.route({
+    }, {
         method: 'POST',
         path: '/login',
         config: {

@@ -6,28 +6,48 @@ const Hoek = require('hoek');
 const Joi = require('joi');
 const Package = require('./package');
 
-
 const internals = {
-    schemeOptionsSchema: {
-        apiKey: Joi.string().required(),
-        cookieName: Joi.string().default('authy'),
-        generateSmsPath: Joi.string().default('/authy-generate-sms'),
-        sandbox: Joi.boolean().default(false),
-        cookieOptions: Joi.object(),
-        sandboxUrl: Joi.string().default('http://sandbox-api.authy.com'),
-        funcs: {
-            register: Joi.func().required(),
-            verify: Joi.func().required(),
-            failRegister: Joi.func().default((err, request, reply) => {
+    defaults: {
+        register: (request, reply) => {
 
-                return reply(Boom.unauthorized('Could\'t register user'));
-            }),
-            failVerify: Joi.func().default((err, request, reply) => {
+            reply.view('authy/register', { path: request.path });
+        },
+        verify: (request, reply) => {
 
-                return reply(Boom.unauthorized('Could\'t validate token'));
-            })
+            reply.view('authy/verify', {
+                path: request.path,
+                smsPath: request.plugins.authy.smsPath
+            });
+        },
+        failRegister: (err, request, reply) => {
+
+            reply(Boom.unauthorized('Could\'t register user'));
+        },
+        failVerify: (err, request, reply) => {
+
+            reply(Boom.unauthorized('Could\'t validate token'));
         }
     }
+};
+
+internals.schemeOptionsSchema = {
+    apiKey: Joi.string().required(),
+    cookieName: Joi.string().default('authy'),
+    generateSmsPath: Joi.string().default('/authy-generate-sms'),
+    sandbox: Joi.boolean().default(false),
+    cookieOptions: Joi.object(),
+    sandboxUrl: Joi.string().default('http://sandbox-api.authy.com'),
+    funcs: Joi.object().keys({
+        register: Joi.func().default(internals.defaults.register),
+        verify: Joi.func().default(internals.defaults.verify),
+        failRegister: Joi.func().default(internals.defaults.failRegister),
+        failVerify: Joi.func().default(internals.defaults.failVerify)
+    }).default({
+        register: internals.defaults.register,
+        verify: internals.defaults.verify,
+        failRegister: internals.defaults.failRegister,
+        failVerify: internals.defaults.failVerify
+    })
 };
 
 
@@ -55,13 +75,16 @@ internals.scheme = function (server, options) {
     return {
         authenticate: function (request, reply) {
 
-            const cookie = request.state[settings.cookieName];
             request.plugins.authy = request.plugins.authy || {};
             request.plugins.authy.generateSmsPath = settings.generateSmsPath;
+
+            const cookie = request.state[settings.cookieName];
 
             if (!cookie) {
                 return reply(Boom.unauthorized('Missing authy cookie'));
             }
+
+            // Route to appropriate stage
 
             if (request.method === 'get') {
                 if (!cookie.authyId) {
@@ -73,12 +96,16 @@ internals.scheme = function (server, options) {
                 }
             }
 
+            // Success
+
             reply.continue({ credentials: cookie });
         },
         payload: function (request, reply) {
 
             const cookie = request.state[settings.cookieName];
             const payload = request.payload;
+
+            // Registration payload
 
             if (!cookie.authyId) {
                 const schema = {
@@ -102,6 +129,8 @@ internals.scheme = function (server, options) {
                     reply.redirect(request.path).state(settings.cookieName, cookie);
                 });
             }
+
+            // Verification payload
 
             const schema = { token: Joi.number().required() };
             const payloadResult = Joi.validate(request.payload, schema);
