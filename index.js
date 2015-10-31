@@ -5,7 +5,6 @@ const Boom = require('boom');
 const Hoek = require('hoek');
 const Joi = require('joi');
 const Package = require('./package');
-const Uuid = require('uuid');
 
 
 const internals = {
@@ -17,13 +16,13 @@ const internals = {
         cookieOptions: Joi.object(),
         sandboxUrl: Joi.string().default('http://sandbox-api.authy.com'),
         funcs: {
-            registerFunc: Joi.func().required(),
-            verifyFunc: Joi.func().required(),
-            registerError: Joi.func().default(function (err, request, reply) {
+            register: Joi.func().required(),
+            verify: Joi.func().required(),
+            failRegister: Joi.func().default((err, request, reply) => {
 
-                return reply(Boom.unauthorized('Could\'t register user'));    
+                return reply(Boom.unauthorized('Could\'t register user'));
             }),
-            verifyError: Joi.func().default(function (err, request, reply) {
+            failVerify: Joi.func().default((err, request, reply) => {
 
                 return reply(Boom.unauthorized('Could\'t validate token'));
             })
@@ -34,7 +33,6 @@ const internals = {
 
 internals.scheme = function (server, options) {
 
-    const uuid = Uuid.v4();
     const result = Joi.validate(options, internals.schemeOptionsSchema);
     Hoek.assert(!result.error, result.error);
     const settings = result.value;
@@ -67,11 +65,11 @@ internals.scheme = function (server, options) {
 
             if (request.method === 'get') {
                 if (!cookie.authyId) {
-                    return settings.funcs.registerFunc(request, reply);
+                    return settings.funcs.register(request, reply);
                 }
 
                 if (!cookie.verified) {
-                    return settings.funcs.verifyFunc(request, reply);
+                    return settings.funcs.verify(request, reply);
                 }
             }
 
@@ -83,21 +81,21 @@ internals.scheme = function (server, options) {
             const payload = request.payload;
 
             if (!cookie.authyId) {
-                let schema = {
+                const schema = {
                     country: Joi.number().required(),
                     phone: Joi.number().required()
                 };
 
-                let result = Joi.validate(request.payload, schema);
+                const payloadResult = Joi.validate(request.payload, schema);
 
                 if (result.error) {
-                    return settings.funcs.registerError(result.error, request, reply);
+                    return settings.funcs.failRegister(payloadResult.error, request, reply);
                 }
 
                 return authy.register_user(cookie.email, payload.phone, payload.country, true, (err, res) => {
 
                     if (err) {
-                        return settings.funcs.registerError(err, request, reply);
+                        return settings.funcs.failRegister(err, request, reply);
                     }
 
                     cookie.authyId = res.user.id;
@@ -105,17 +103,17 @@ internals.scheme = function (server, options) {
                 });
             }
 
-            let schema = { token: Joi.number().required() };
-            let result = Joi.validate(request.payload, schema);
+            const schema = { token: Joi.number().required() };
+            const payloadResult = Joi.validate(request.payload, schema);
 
-            if (result.error) {
-                return settings.funcs.verifyError(result.error, request, reply);
+            if (payloadResult.error) {
+                return settings.funcs.failVerify(payloadResult.error, request, reply);
             }
 
             return authy.verify(cookie.authyId, payload.token, (err, res) => {
 
                 if (err) {
-                    return settings.funcs.verifyError(err, request, reply);
+                    return settings.funcs.failVerify(err, request, reply);
                 }
 
                 cookie.verified = true;

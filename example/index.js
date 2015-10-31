@@ -43,11 +43,11 @@ server.register([
             password: 'Q3QJIcIIvKcMwG7c'
         },
         funcs: {
-            registerFunc: function (request, reply) {
+            register: function (request, reply) {
 
                 reply.view('register', { path: request.path });
             },
-            verifyFunc: function (request, reply) {
+            verify: function (request, reply) {
 
                 reply.view('verify', {
                     path: request.path,
