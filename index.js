@@ -39,8 +39,8 @@ internals.scheme = function (server, options) {
         path: smsPath,
         handler: function (request, reply) {
 
-            authy.request_sms(request.state[settings.cookieName].authyId, function (err, res) {
-                
+            authy.request_sms(request.state[settings.cookieName].authyId, (err, res) => {
+
                 reply('ok');
             });
         }
@@ -50,8 +50,8 @@ internals.scheme = function (server, options) {
         authenticate: function (request, reply) {
 
             const cookie = request.state[settings.cookieName];
-            request.plugins['authy'] = request.plugins['authy'] || {};
-            request.plugins['authy'].smsPath = smsPath;
+            request.plugins.authy = request.plugins.authy || {};
+            request.plugins.authy.smsPath = smsPath;
 
             if (!cookie) {
                 return reply(Boom.unauthorized('Missing authy cookie'));
