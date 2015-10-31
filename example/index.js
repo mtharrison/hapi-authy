@@ -1,5 +1,6 @@
 'use strict';
 
+const Boom = require('boom');
 const Bcrypt = require('bcryptjs');
 const Hapi = require('hapi');
 const Joi = require('joi');
@@ -26,12 +27,80 @@ server.register([
         throw err;
     }
 
+    server.views({
+        engines: {
+            hbs: require('handlebars')
+        },
+        path: Path.join(__dirname, 'templates'),
+        layout: true
+    });
+
+    // Email/password login stage
+
     server.auth.strategy('session', 'cookie', {
         password: 'Q3QJIcIIvKcMwG7c',
         cookie: 'sid-example',
         redirectTo: '/login',
         isSecure: false
     });
+
+    server.route([{
+        method: 'GET',
+        path: '/',
+        config: {
+            auth: 'session',
+            handler: {
+                view: 'index'
+            }
+        }
+    }, {
+        method: 'GET',
+        path: '/login',
+        handler: {
+            view: 'login'
+        }
+    }, {
+        method: 'POST',
+        path: '/login',
+        config: {
+            validate: {
+                payload: {
+                    email: Joi.string().email().required(),
+                    password: Joi.string().required(),
+                    enableTfa: Joi.boolean().default(false)
+                }
+            }
+        },
+        handler: function (request, reply) {
+
+            const email = request.payload.email;
+            const password = request.payload.password;
+            const user = users[email];
+
+            if (!user) {
+                return reply(Boom.unauthorized());
+            }
+
+            Bcrypt.compare(password, user.password, (err, valid) => {
+
+                if (err || !valid) {
+                    return reply(Boom.unauthorized());
+                }
+
+                if (request.payload.enableTfa || user.requireTfa) {
+                    return reply.redirect('/authy').state('authy', {
+                        email: email,
+                        authyId: user.authyId
+                    });
+                }
+
+                request.auth.session.set(user);
+                return reply.redirect('/');
+            });
+        }
+    }]);
+
+    // Authy 2FA stage
 
     server.auth.strategy('authy', 'authy', {
         apiKey: 'ikdsVwp8503GNcAqMLC2GToxj1EXq3Yq',
@@ -44,44 +113,7 @@ server.register([
         }
     });
 
-    server.views({
-        engines: {
-            hbs: require('handlebars')
-        },
-        path: Path.join(__dirname, 'templates'),
-        layout: true,
-        isCached: false
-    });
-
-    server.route([{
-        method: 'GET',
-        path: '/',
-        config: {
-            auth: 'session'
-        },
-        handler: function (request, reply) {
-
-            reply.view('index');
-        }
-    }, {
-        method: 'GET',
-        path: '/login',
-        handler: function (request, reply) {
-
-            reply.view('login');
-        }
-    }, {
-        method: 'GET',
-        path: '/logout',
-        config: {
-            auth: 'session'
-        },
-        handler: function (request, reply) {
-
-            request.auth.session.clear();
-            reply.redirect('/');
-        }
-    }, {
+    server.route({
         method: ['GET', 'POST'],
         path: '/authy',
         config: {
@@ -99,52 +131,7 @@ server.register([
                 return reply.redirect('/');
             }
         }
-    }, {
-        method: 'POST',
-        path: '/login',
-        config: {
-            validate: {
-                payload: {
-                    email: Joi.string().email().required(),
-                    password: Joi.string().required(),
-                    tfa: Joi.boolean().default(false)
-                }
-            }
-        },
-        handler: function (request, reply) {
-
-            const email = request.payload.email;
-            const password = request.payload.password;
-            const tfa = request.payload.tfa;
-
-            const user = users[email];
-
-            if (!user) {
-                return reply(Boom.unauthorized());
-            }
-
-            Bcrypt.compare(password, user.password, (err, valid) => {
-
-                if (err) {
-                    throw err;
-                }
-
-                if (!valid) {
-                    return reply(Boom.unauthorized());
-                }
-
-                if (tfa || user.requireTfa) {
-                    return reply.redirect('/authy').state('authy', {
-                        email: email,
-                        authyId: user.authyId
-                    });
-                }
-
-                request.auth.session.set(user);
-                return reply.redirect('/');
-            });
-        }
-    }]);
+    });
 
     server.start(() => {
 

@@ -30,6 +30,7 @@ const internals = {
     }
 };
 
+
 internals.schemeOptionsSchema = {
     apiKey: Joi.string().required(),
     cookieName: Joi.string().default('authy'),
