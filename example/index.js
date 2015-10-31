@@ -40,7 +40,10 @@ server.register([
         },
         verifyFunc: function (request, reply) {
 
-            reply.view('verify', { path: request.path });
+            reply.view('verify', { 
+                path: request.path,
+                smsPath: request.plugins['authy'].smsPath
+            });
         }
     });
 

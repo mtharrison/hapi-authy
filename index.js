@@ -5,6 +5,7 @@ const Boom = require('boom');
 const Hoek = require('hoek');
 const Joi = require('joi');
 const Package = require('./package');
+const Uuid = require('uuid');
 
 
 const internals = {
@@ -22,6 +23,7 @@ const internals = {
 
 internals.scheme = function (server, options) {
 
+    const uuid = Uuid.v4();
     const result = Joi.validate(options, internals.schemeOptionsSchema);
     Hoek.assert(!result.error, result.error);
 
@@ -30,10 +32,26 @@ internals.scheme = function (server, options) {
 
     server.state(settings.cookieName, settings.cookieOptions);
 
+    const smsPath = '/authy-' + uuid + '-request-sms';
+
+    server.route({
+        method: 'GET',
+        path: smsPath,
+        handler: function (request, reply) {
+
+            authy.request_sms(request.state[settings.cookieName].authyId, function (err, res) {
+                
+                reply('ok');
+            });
+        }
+    });
+
     return {
         authenticate: function (request, reply) {
 
             const cookie = request.state[settings.cookieName];
+            request.plugins['authy'] = request.plugins['authy'] || {};
+            request.plugins['authy'].smsPath = smsPath;
 
             if (!cookie) {
                 return reply(Boom.unauthorized('Missing authy cookie'));
