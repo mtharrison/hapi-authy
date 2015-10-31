@@ -34,16 +34,18 @@ server.register([
             encoding: 'iron',
             password: 'Q3QJIcIIvKcMwG7c'
         },
-        registerFunc: function (request, reply) {
+        funcs: {
+            registerFunc: function (request, reply) {
 
-            reply.view('register', { path: request.path });
-        },
-        verifyFunc: function (request, reply) {
+                reply.view('register', { path: request.path });
+            },
+            verifyFunc: function (request, reply) {
 
-            reply.view('verify', {
-                path: request.path,
-                smsPath: request.plugins.authy.smsPath
-            });
+                reply.view('verify', {
+                    path: request.path,
+                    smsPath: request.plugins.authy.smsPath
+                });
+            }
         }
     });
 

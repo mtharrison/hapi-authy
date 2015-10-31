@@ -12,11 +12,22 @@ const internals = {
     schemeOptionsSchema: {
         apiKey: Joi.string().required(),
         cookieName: Joi.string().default('authy'),
+        generateSmsPath: Joi.string().default('/authy-generate-sms'),
         sandbox: Joi.boolean().default(false),
         cookieOptions: Joi.object(),
         sandboxUrl: Joi.string().default('http://sandbox-api.authy.com'),
-        registerFunc: Joi.func().required(),
-        verifyFunc: Joi.func().required()
+        funcs: {
+            registerFunc: Joi.func().required(),
+            verifyFunc: Joi.func().required(),
+            registerError: Joi.func().default(function (err, request, reply) {
+
+                return reply(Boom.unauthorized('Could\'t register user'));    
+            }),
+            verifyError: Joi.func().default(function (err, request, reply) {
+
+                return reply(Boom.unauthorized('Could\'t validate token'));
+            })
+        }
     }
 };
 
@@ -26,17 +37,14 @@ internals.scheme = function (server, options) {
     const uuid = Uuid.v4();
     const result = Joi.validate(options, internals.schemeOptionsSchema);
     Hoek.assert(!result.error, result.error);
-
     const settings = result.value;
     const authy = Authy(settings.apiKey, settings.sandbox ? settings.sandboxUrl : null);
 
     server.state(settings.cookieName, settings.cookieOptions);
 
-    const smsPath = '/authy-' + uuid + '-request-sms';
-
     server.route({
         method: 'GET',
-        path: smsPath,
+        path: settings.generateSmsPath,
         handler: function (request, reply) {
 
             authy.request_sms(request.state[settings.cookieName].authyId, (err, res) => {
@@ -51,7 +59,7 @@ internals.scheme = function (server, options) {
 
             const cookie = request.state[settings.cookieName];
             request.plugins.authy = request.plugins.authy || {};
-            request.plugins.authy.smsPath = smsPath;
+            request.plugins.authy.generateSmsPath = settings.generateSmsPath;
 
             if (!cookie) {
                 return reply(Boom.unauthorized('Missing authy cookie'));
@@ -59,11 +67,11 @@ internals.scheme = function (server, options) {
 
             if (request.method === 'get') {
                 if (!cookie.authyId) {
-                    return settings.registerFunc(request, reply);
+                    return settings.funcs.registerFunc(request, reply);
                 }
 
                 if (!cookie.verified) {
-                    return settings.verifyFunc(request, reply);
+                    return settings.funcs.verifyFunc(request, reply);
                 }
             }
 
@@ -74,11 +82,22 @@ internals.scheme = function (server, options) {
             const cookie = request.state[settings.cookieName];
             const payload = request.payload;
 
-            if (payload.phone && payload.country) {
+            if (!cookie.authyId) {
+                let schema = {
+                    country: Joi.number().required(),
+                    phone: Joi.number().required()
+                };
+
+                let result = Joi.validate(request.payload, schema);
+
+                if (result.error) {
+                    return settings.funcs.registerError(result.error, request, reply);
+                }
+
                 return authy.register_user(cookie.email, payload.phone, payload.country, true, (err, res) => {
 
-                    if (err || !res.success) {
-                        return reply(Boom.unauthorized('Could\'t register user'));
+                    if (err) {
+                        return settings.funcs.registerError(err, request, reply);
                     }
 
                     cookie.authyId = res.user.id;
@@ -86,19 +105,22 @@ internals.scheme = function (server, options) {
                 });
             }
 
-            if (request.payload.token) {
-                return authy.verify(cookie.authyId, payload.token, (err, res) => {
+            let schema = { token: Joi.number().required() };
+            let result = Joi.validate(request.payload, schema);
 
-                    if (err) {
-                        return reply(Boom.unauthorized('Could\'t validate token'));
-                    }
-
-                    cookie.verified = true;
-                    reply.redirect(request.path).state(settings.cookieName, cookie);
-                });
+            if (result.error) {
+                return settings.funcs.verifyError(result.error, request, reply);
             }
 
-            reply(Boom.unauthorized('Invalid payload'));
+            return authy.verify(cookie.authyId, payload.token, (err, res) => {
+
+                if (err) {
+                    return settings.funcs.verifyError(err, request, reply);
+                }
+
+                cookie.verified = true;
+                reply.redirect(request.path).state(settings.cookieName, cookie);
+            });
         }
     };
 };
