@@ -11,6 +11,10 @@ Check out the example under `examples/basic` for a full working example of form 
 2. Create an app
 3. Grab your api key
 
+### Installation
+
+    npm install --save hapi-authy
+
 ### Usage
 
 This would normally be used to implement the second step in a login process. After a successful step 1 (usually username/password login), a user with a 2fa-enabled account would be redirected to the 2fa route. Everything is then handled by the plugin.

@@ -1,6 +1,6 @@
 {
   "name": "hapi-authy",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Authy 2FA with hapi",
   "main": "index.js",
   "scripts": {
