@@ -11,7 +11,7 @@ server.connection({ port: 4000 });
 
 const users = {
     'hi@matt-harrison.com': {
-        password: '$2a$08$.sI.S6l9lL0crviIOn/EUuAc/0oTlBA9R0b6rGEJYRD2p2h76bKK.',
+        password: '$2a$08$.sI.S6l9lL0crviIOn/EUuAc/0oTlBA9R0b6rGEJYRD2p2h76bKK.', // 'secret'
         requireTfa: false,
         authyId: null
     }
@@ -38,7 +38,7 @@ server.register([
     // Email/password login stage
 
     server.auth.strategy('session', 'cookie', {
-        password: 'Q3QJIcIIvKcMwG7c',
+        password: 'password',
         cookie: 'sid-example',
         redirectTo: '/login',
         isSecure: false
@@ -103,13 +103,13 @@ server.register([
     // Authy 2FA stage
 
     server.auth.strategy('authy', 'authy', {
-        apiKey: 'aDfI6YR2qFF6Klsl6eEJTBLqAfphO9AG',
+        apiKey: 'AUTHY_API_KEY',
         sandbox: false,
         cookieOptions: {
             isSecure: false,
             path: '/',
             encoding: 'iron',
-            password: 'Q3QJIcIIvKcMwG7c'
+            password: 'password'
         }
     });
 
