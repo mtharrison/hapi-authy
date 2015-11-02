@@ -60,9 +60,9 @@ server.route({
 
 The plugin will then take over fetching the relevant information from the user. The handler for this route will be finally executed once the user has successfully entered their 2FA token, either via SMS or the vis from the Authy app.
 
-![step1](http://matt-github.s3.amazonaws.com/hapi-authy/step1.png)
-![step2](http://matt-github.s3.amazonaws.com/hapi-authy/step2.png)
-![step3](http://matt-github.s3.amazonaws.com/hapi-authy/step3.png)
+![step1](https://matt-github.s3.amazonaws.com/hapi-authy/step1.png)
+![step2](https://matt-github.s3.amazonaws.com/hapi-authy/step2.png)
+![step3](https://matt-github.s3.amazonaws.com/hapi-authy/step3.png)
 
 ### Configuration/customisation
 
