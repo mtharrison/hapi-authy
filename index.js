@@ -56,7 +56,8 @@ internals.schemeOptionsSchema = {
         failVerify: internals.defaults.failVerify,
         tokenRequested: internals.defaults.tokenRequested
     }),
-    client: Joi.func().default(require('authy'))
+    client: Joi.func().default(require('authy')),
+    requestTokenRouteConfig: Joi.object().default({})
 };
 
 
@@ -70,6 +71,7 @@ internals.scheme = function (server, options) {
     server.state(settings.cookieName, settings.cookieOptions);
 
     server.route({
+        config: settings.requestTokenRouteConfig,
         method: 'GET',
         path: settings.requestTokenUrl,
         handler: function (request, reply) {

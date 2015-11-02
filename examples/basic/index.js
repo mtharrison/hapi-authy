@@ -20,7 +20,7 @@ const users = {
 server.register([
     { register: require('vision') },
     { register: require('hapi-auth-cookie') },
-    { register: require('..') }
+    { register: require('../..') }
 ], (err) => {
 
     if (err) {
